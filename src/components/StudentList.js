@@ -17,11 +17,13 @@ class StudentList extends Component {
         super(props);
         this.state = {
             students: [],
+			isAdmin: false,
         }
     }
 
     componentDidMount() {
         this.fetchStudents();
+		this.checkIsAdmin();
     }
 
     fetchStudents = () => {
@@ -32,7 +34,8 @@ class StudentList extends Component {
             `${SERVER_URL}/student`,
             {
                 method: 'GET',
-                headers: { 'X-XSRF-TOKEN': token }
+                headers: { 'X-XSRF-TOKEN': token },
+                credentials: 'include',
             }
         )
         .then((response) => {
@@ -68,7 +71,7 @@ class StudentList extends Component {
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json',
-                           'X-XSRF-TOKEN': token  }, 
+                           'X-XSRF-TOKEN': token  }, credentials: 'include',
                 body: JSON.stringify(student)
             }
         )
@@ -91,6 +94,44 @@ class StudentList extends Component {
             console.error(err);
         })
     }
+	
+	checkIsAdmin = () => {
+        let isAdmin = false;  
+        const token = Cookies.get('XSRF-TOKEN');
+
+        fetch(
+            `${SERVER_URL}/student/place-hold`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json',
+                           'X-XSRF-TOKEN': token  },
+                credentials: 'include',
+                body: {}
+            })
+            .then((res) => {
+                if (res.status === 401) {
+                    // UNAUTHORIZED response, NOT ADMIN
+                    isAdmin = false;
+                } else if (res.status == 400) {
+                    // BAD_REQUEST response, ADMIN!
+                    isAdmin =  true;
+                } else {
+                    isAdmin =  false;  
+                }
+            })
+            .catch(err => {
+                toast.error("Fetch failed.", {
+                    position: toast.POSITION.BOTTOM_LEFT
+                });
+                console.error(err);
+                isAdmin = false;  
+            })
+            .finally(() => {
+                this.setState({
+                    isAdmin: isAdmin
+                })
+            })
+    }	
 
     render() {
         const columns = [
@@ -98,6 +139,8 @@ class StudentList extends Component {
             { field: 'email', headerName: 'Email', width: 200 },
             { field: 'status_code', headerName: 'Status Code', width: 200 },
         ];
+		
+		const isAdmin = this.state.isAdmin
 
         return(
             <div>
@@ -109,11 +152,13 @@ class StudentList extends Component {
                     </Toolbar>
                 </AppBar>
                 <div className="App">
+				{isAdmin && (
                     <Grid container>
                         <Grid item>
                             <AddStudent addStudent={this.addStudent} />
                         </Grid>
                     </Grid>
+				)}
                     <div style={{ height: 400, width: '100%' }}>
                         <DataGrid rows={this.state.students} columns={columns} />
                     </div>
