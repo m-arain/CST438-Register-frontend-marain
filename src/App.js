@@ -6,6 +6,7 @@ import SchedList from './components/SchedList';
 import Semester from './components/Semester';
 import StudentList from './components/StudentList';
 import {BrowserRouter, Switch, Route} from 'react-router-dom';
+import Login from './components/Login';
 
 function App() {
   return (
@@ -19,7 +20,8 @@ function App() {
       </AppBar>
       <BrowserRouter>
        <Switch>
-        <Route exact path='/' component={Semester} />
+        <Route exact path='/' component={Login} />
+		<Route exact path='/semester' component={Semester} />
         <Route path='/schedule' component={SchedList} />
 		<Route path="/student" component={StudentList} />
        </Switch>
